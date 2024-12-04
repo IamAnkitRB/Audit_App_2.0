@@ -6,10 +6,10 @@ from app.models.user import User
 from datetime import datetime, timedelta
 from app.services.auth_service import generate_jwt, decode_jwt
 
-otp_bp = Blueprint('otp_bp', __name__)
+auth_bp = Blueprint('auth_bp', __name__)
 
 # Route to request an OTP
-@otp_bp.route('/request', methods=['POST'])
+@auth_bp.route('/request', methods=['POST'])
 def request_otp():
     try:
         data = request.get_json()
@@ -32,7 +32,7 @@ def request_otp():
         return jsonify({"error": str(e)}), 500
 
 # Route to validate the OTP
-@otp_bp.route('/validate', methods=['POST'])
+@auth_bp.route('/validate', methods=['POST'])
 def validate_otp():
     try:
         data = request.get_json()
@@ -66,7 +66,7 @@ def validate_otp():
         return jsonify({"error": str(e)}), 500
 
 
-@otp_bp.route('/resend', methods=['POST'])
+@auth_bp.route('/resend', methods=['POST'])
 def resend_otp():
     try:
         data = request.get_json()

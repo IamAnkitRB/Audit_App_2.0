@@ -14,7 +14,9 @@ def create_app():
     migrate.init_app(app, db)
     CORS(app, resources={r"/*": {"origins": "https://boundary.agency"}})
 
-    from app.routes.auth_routes import otp_bp
-    app.register_blueprint(otp_bp, url_prefix='/otp')  
+    from app.routes.auth_routes import auth_bp
+    from app.routes.hubspot_routes import hub_bp
+    app.register_blueprint(auth_bp, url_prefix='/auth')  
+    app.register_blueprint(hub_bp, url_prefix='/hubspot')
 
     return app
