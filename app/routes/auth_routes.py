@@ -1,19 +1,12 @@
 from flask import Blueprint, request, jsonify
-from app.services.auth_service import create_or_update_otp
+from app.services.auth_service import create_or_update_otp, generate_otp
 from app.utils.email_service import send_otp_via_email
 from app import db
 from app.models.user import User
-import jwt
 from datetime import datetime, timedelta
+from app.services.auth_service import generate_jwt, decode_jwt
 
 otp_bp = Blueprint('otp_bp', __name__)
-
-# Function to generate JWT token
-def generate_jwt(email):
-    expiration = datetime.now() + timedelta(minutes=10)
-    payload = {'email': email, 'exp': expiration}
-    token = jwt.encode(payload, 'your-secret-key', algorithm='HS256')
-    return token
 
 # Route to request an OTP
 @otp_bp.route('/request', methods=['POST'])
@@ -72,12 +65,45 @@ def validate_otp():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-# Function to decode and verify JWT token
-def decode_jwt(token):
+
+@otp_bp.route('/resend', methods=['POST'])
+def resend_otp():
     try:
-        payload = jwt.decode(token, 'your-secret-key', algorithms=['HS256'])
-        return payload['email']
-    except jwt.ExpiredSignatureError:
-        return None
-    except jwt.InvalidTokenError:
-        return None
+        data = request.get_json()
+        token = data.get('token')
+
+        if not token:
+           return jsonify({"error": "Token is not provided"}), 400
+        
+        decoded_email = decode_jwt(token)
+
+        otp_record = User.query.filter_by(email=decoded_email).order_by(User.id.desc()).first()
+        
+        if otp_record:
+                otp = generate_otp()
+                expiration = datetime.now() + timedelta(minutes=5)
+                otp_record.otp = otp
+                otp_record.expiration = expiration
+                otp_record.validated = False
+                db.session.commit()
+        else:
+            otp = generate_otp()
+            expiration = datetime.now() + timedelta(minutes=5)
+            otp_record = User(email=decoded_email, otp=otp, expiration=expiration)
+            otp_record.validated = False
+            db.session.add(otp_record)
+            db.session.commit()  
+
+        # Send the new OTP via email
+        if send_otp_via_email(decoded_email, otp):
+            token = generate_jwt(decoded_email)
+            response = jsonify({"message": "OTP resent successfully!", "token": token})
+            response.set_cookie('token', token, httponly=True)
+            return response, 200
+        else:
+            return jsonify({"error": "Failed to send OTP"}), 500          
+
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500     
+

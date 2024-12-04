@@ -1,8 +1,28 @@
 import random
 import string
+import jwt
 from datetime import datetime, timedelta
 from app import db
 from app.models.user import User
+from app.config import Config
+
+# Function to generate JWT token
+def generate_jwt(email):
+    expiration = datetime.now() + timedelta(minutes=10)
+    payload = {'email': email, 'exp': expiration}
+    token = jwt.encode(payload, Config.SECRET_KEY, algorithm='HS256')
+    return token
+
+
+# Function to decode and verify JWT token
+def decode_jwt(token):
+    try:
+        payload = jwt.decode(token, Config.SECRET_KEY, algorithms=['HS256'])
+        return payload['email']
+    except jwt.ExpiredSignatureError:
+        return None
+    except jwt.InvalidTokenError:
+        return None
 
 # Function to generate a 6-digit OTP
 def generate_otp():

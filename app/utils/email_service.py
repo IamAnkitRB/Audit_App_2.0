@@ -1,12 +1,14 @@
 import smtplib
+from app.config import Config
 
 # Function to send OTP via email
 def send_otp_via_email(email, otp):
     try:
-        smtp_server = "smtp.gmail.com"  
-        smtp_port = 587
-        sender_email = "ankit@boundary.agency" 
-        sender_password = "your-email-password"  
+        smtp_server = Config.SMTP_SERVER
+        smtp_port = Config.SMTP_PORT
+        sender_email = Config.SENDER_EMAIL 
+        sender_password = Config.SENDER_PASSWORD  
+
 
         subject = "Your OTP Code"
         body = f"Your OTP code is: {otp}"
