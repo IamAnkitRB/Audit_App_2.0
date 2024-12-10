@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Form Integration</title>
+    <script
+      charset="utf-8"
+      type="text/javascript"
+      src="https://js.hsforms.net/forms/embed/v2.js"
+    ></script>
+    <style>
+      #loader {
+        max-width: 50rem;
+        text-align: left;
+        display: none;
+      }
+      svg path,
+      svg rect {
+        fill: #6799e4;
+      }
+      .error-message {
+        color: black;
+        display: none;
+        position: absolute;
+        width: max-content;
+        max-width: 40rem;
+      }
+      .error {
+        color: red;
+      }
+      .success {
+        color: green;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div>
+      <form id="otp-form">
+        <label for="otp">Enter OTP</label>
+        <input type="text" id="otp" name="otp" required />
+        <button type="submit" id="submit-btn">Submit OTP</button>
+      </form>
+      <div class="error" id="error-message" style="display: none"></div>
+      <div class="success" id="success-message" style="display: none"></div>
+      <div id="emailError" style="display: none">Invalid email format!</div>
+      <div id="fetchError" style="display: none">
+        Error fetching the report!
+      </div>
+
+      <div id="loader">
+        <svg
+          version="1.1"
+          xmlns="http://www.w3.org/2000/svg"
+          xmlns:xlink="http://www.w3.org/1999/xlink"
+          x="0px"
+          y="0px"
+          width="240px"
+          height="30px"
+          viewBox="0 0 124 30"
+          style="enable-background: new 0 0 50 50"
+          xml:space="preserve"
+        >
+          <rect x="0" y="13" width="4" height="5" fill="#333">
+            <animate
+              attributeName="height"
+              attributeType="XML"
+              values="5;21;5"
+              begin="0s"
+              dur="4.5s"
+              repeatCount="indefinite"
+            />
+            <animate
+              attributeName="y"
+              attributeType="XML"
+              values="13; 5; 13"
+              begin="0s"
+              dur="4.5s"
+              repeatCount="indefinite"
+            />
+          </rect>
+          <rect x="10" y="13" width="4" height="5" fill="#333">
+            <animate
+              attributeName="height"
+              attributeType="XML"
+              values="5;21;5"
+              begin="0.5s"
+              dur="4.5s"
+              repeatCount="indefinite"
+            />
+            <animate
+              attributeName="y"
+              attributeType="XML"
+              values="13; 5; 13"
+              begin="0.5s"
+              dur="4.5s"
+              repeatCount="indefinite"
+            />
+          </rect>
+          <rect x="20" y="13" width="4" height="5" fill="#333">
+            <animate
+              attributeName="height"
+              attributeType="XML"
+              values="5;21;5"
+              begin="1s"
+              dur="4.5s"
+              repeatCount="indefinite"
+            />
+            <animate
+              attributeName="y"
+              attributeType="XML"
+              values="13; 5; 13"
+              begin="1s"
+              dur="4.5s"
+              repeatCount="indefinite"
+            />
+          </rect>
+          <rect x="30" y="13" width="4" height="5" fill="#333">
+            <animate
+              attributeName="height"
+              attributeType="XML"
+              values="5;21;5"
+              begin="1.5s"
+              dur="4.5s"
+              repeatCount="indefinite"
+            />
+            <animate
+              attributeName="y"
+              attributeType="XML"
+              values="13; 5; 13"
+              begin="1.5s"
+              dur="4.5s"
+              repeatCount="indefinite"
+            />
+          </rect>
+          <rect x="40" y="13" width="4" height="5" fill="#333">
+            <animate
+              attributeName="height"
+              attributeType="XML"
+              values="5;21;5"
+              begin="2s"
+              dur="4.5s"
+              repeatCount="indefinite"
+            />
+            <animate
+              attributeName="y"
+              attributeType="XML"
+              values="13; 5; 13"
+              begin="2s"
+              dur="4.5s"
+              repeatCount="indefinite"
+            />
+          </rect>
+          <rect x="50" y="13" width="4" height="5" fill="#333">
+            <animate
+              attributeName="height"
+              attributeType="XML"
+              values="5;21;5"
+              begin="2.5s"
+              dur="4.5s"
+              repeatCount="indefinite"
+            />
+            <animate
+              attributeName="y"
+              attributeType="XML"
+              values="13; 5; 13"
+              begin="2.5s"
+              dur="4.5s"
+              repeatCount="indefinite"
+            />
+          </rect>
+        </svg>
+        <h5>Your report is being generated!</h5>
+        <p>
+          This generally takes ~30s - 5 minutes, depending on your data. Go make
+          yourself a cup of coffee, stretch a little, check your Instagram reels
+          or something.
+        </p>
+        <p>
+          Need to leave the page? That's fine - we'll share the report on email
+          as soon as it's done.
+        </p>
+      </div>
+
+      <button id="resend-otp" style="display: none">Resend OTP</button>
+    </div>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        const otpForm = document.getElementById("otp-form");
+        const otpInput = document.getElementById("otp");
+        const errorMessage = document.getElementById("error-message");
+        const successMessage = document.getElementById("success-message");
+        const resendButton = document.getElementById("resend-otp");
+        const submitButton = document.getElementById("submit-btn");
+        const loader = document.getElementById("loader");
+        const emailError = document.getElementById("emailError");
+        const fetchError = document.getElementById("fetchError");
+
+        otpForm.addEventListener("submit", function (e) {
+          e.preventDefault();
+          const otp = otpInput.value.trim();
+
+          if (otp === "") {
+            showError("OTP cannot be empty");
+            return;
+          }
+
+          submitOTP(otp);
+        });
+
+        resendButton.addEventListener("click", function () {
+          resendOTP();
+        });
+
+        function getCookie(name) {
+          const value = `; ${document.cookie}`;
+          const parts = value.split(`; ${name}=`);
+          if (parts.length === 2) return parts.pop().split(";").shift();
+          return null;
+        }
+
+        function showError(message) {
+          errorMessage.textContent = message;
+          errorMessage.style.display = "block";
+          successMessage.style.display = "none";
+        }
+
+        function showSuccess(message) {
+          successMessage.textContent = message;
+          successMessage.style.display = "block";
+          errorMessage.style.display = "none";
+        }
+
+        function submitOTP(otp) {
+          const token = getCookie("token");
+          fetch("https://ebf5-14-143-254-82.ngrok-free.app/auth/validate", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ otp: otp, token: token }),
+          })
+            .then((response) => response.json())
+            .then((data) => {
+              if (data.success) {
+                showSuccess("OTP validated successfully!");
+                resendButton.style.display = "none";
+                submitButton.style.display = "none";
+                otpForm.style.display = "none";
+                triggerReportGeneration();
+              } else {
+                showError("Incorrect OTP. Please try again.");
+                resendButton.style.display = "block";
+              }
+            })
+            .catch((error) => {
+              showError("Something went wrong. Please try again later.");
+              console.error(error);
+            });
+        }
+
+        function resendOTP() {
+          const token = getCookie("token");
+          fetch("https://ebf5-14-143-254-82.ngrok-free.app/auth/resend", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ token: token }),
+          })
+            .then((response) => response.json())
+            .then((data) => {
+              if (data.success) {
+                showSuccess("OTP has been resent to your email.");
+                resendButton.style.display = "none";
+              } else {
+                showError("Failed to resend OTP. Please try again.");
+              }
+            })
+            .catch((error) => {
+              showError("Something went wrong. Please try again later.");
+              console.error(error);
+            });
+        }
+
+        function triggerReportGeneration() {
+          const email = "ankit@boundary.agency"; // Static email for now
+
+          if (!email || !/\S+@\S+\.\S+/.test(email)) {
+            emailError.style.display = "block";
+            return;
+          } else {
+            emailError.style.display = "none";
+          }
+
+          loader.style.display = "block"; // Show loader animation
+          fetchError.style.display = "none";
+
+          const url = `https://deep-socially-polliwog.ngrok-free.app/getreport?email=${encodeURIComponent(
+            email
+          )}`;
+          fetch(url, { credentials: "include" })
+            .then((response) => {
+              if (!response.ok) {
+                throw new Error(
+                  `Network response was not ok: ${response.status}`
+                );
+              }
+              return response.json();
+            })
+            .then((data) => {
+              if (data.link) {
+                const viewReportBtn = document.createElement("button");
+                viewReportBtn.textContent = "View Report";
+                viewReportBtn.onclick = function () {
+                  window.open(data.link, "_blank");
+                };
+                document.body.appendChild(viewReportBtn);
+              } else {
+                throw new Error("Report link not provided in response");
+              }
+            })
+            .catch((error) => {
+              console.error("Error:", error);
+              fetchError.textContent = `Looks like your database is pretty large! Don't worry, your report will automatically get generated and be sent to your email ID.`;
+              fetchError.style.display = "block";
+            })
+            .finally(() => {
+              loader.style.display = "none"; // Hide loader after fetch
+            });
+        }
+      });
+    </script>
+  </body>
+</html>
